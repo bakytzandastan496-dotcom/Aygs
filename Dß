@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Рик и Морти 2D: 10 000+ Паразиты воспоминаний</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #060b16;
+      color: #f8fafc;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      touch-action: none;
+    }
+
+    .secret-corner {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 74px;
+      height: 74px;
+      z-index: 35;
+    }
+
+    .hud-top {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .pill {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill span {
+      color: #a3e635;
+    }
+
+    .pill.advisor span {
+      color: #38bdf8;
+    }
+
+    .pill.ad-timer span {
+      color: #fbbf24;
+    }
+
+    .pill.danger {
+      border-color: rgba(248, 113, 113, 0.6);
+    }
+
+    .pill.danger span {
+      color: #f87171;
+    }
+
+    .top-mech-bar {
+      position: fixed;
+      top: 42px;
+      left: 8px;
+      right: 8px;
+      z-index: 22;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .mech-btn {
+      pointer-events: auto;
+      appearance: none;
+      border: 1.5px solid #f43f5e;
+      background: linear-gradient(135deg, #be123c, #e11d48);
+      color: #fff1f2;
+      border-radius: 10px;
+      padding: 5px 11px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .mech-btn.active {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      border-color: #bef264;
+      color: #052e16;
+    }
+
+    .mech-btn:active {
+      transform: scale(0.96);
+    }
+
+    .banner {
+      position: fixed;
+      top: 78px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1.5px solid #a3e635;
+      border-radius: 12px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #ecfccb;
+      text-align: center;
+      max-width: 94vw;
+      display: none;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .quote-box {
+      position: fixed;
+      top: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 26;
+      width: min(440px, 94vw);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1.5px solid #38bdf8;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #f1f5f9;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+      display: none;
+    }
+
+    .quote-box.show {
+      display: block;
+    }
+
+    .quote-line {
+      margin-bottom: 4px;
+    }
+
+    .quote-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .q-speaker-a {
+      color: #a3e635;
+      font-weight: 800;
+    }
+
+    .q-speaker-b {
+      color: #facc15;
+      font-weight: 800;
+    }
+
+    /* Катсцена 10 000 очков: бег домой, Саммер, взрыв, Рик подглядывает */
+    .cutscene-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 47;
+      background: rgba(2, 6, 23, 0.86);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .cutscene-overlay.open {
+      display: flex;
+    }
+
+    .cutscene-card {
+      width: 100%;
+      max-width: 410px;
+      background: #0f172a;
+      border: 2px solid #a3e635;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.92);
+    }
+
+    .cutscene-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fde047;
+      background: rgba(251, 191, 36, 0.14);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-bottom: 10px;
+    }
+
+    .cutscene-scene {
+      background: linear-gradient(135deg, #1e293b, #090d16);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .boom-line {
+      color: #fb7185;
+      font-weight: 800;
+      margin: 6px 0;
+    }
+
+    .rick-line {
+      color: #a3e635;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    .hud-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .hero-bar {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      pointer-events: auto;
+      scrollbar-width: none;
+    }
+
+    .hero-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .hero-btn {
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(30, 41, 59, 0.94);
+      color: #e2e8f0;
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .hero-btn.active {
+      background: linear-gradient(135deg, #16a34a, #0d9488);
+      border-color: #bef264;
+      color: #ffffff;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(30, 41, 59, 0.94);
+      color: #f8fafc;
+      border-radius: 11px;
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-shield {
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
+      border-color: #bae6fd;
+    }
+
+    .btn-tech {
+      background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+      border-color: #a5f3fc;
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #16a34a, #0d9488);
+      border-color: #a3e635;
+    }
+
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-bg.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 390px;
+      background: #0f172a;
+      border: 1.5px solid #a3e635;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.85);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ecfccb;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .upgrade-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .upgrade-card {
+      appearance: none;
+      width: 100%;
+      text-align: left;
+      background: #1e293b;
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #f8fafc;
+      cursor: pointer;
+    }
+
+    .upgrade-card:active {
+      transform: scale(0.98);
+      border-color: #a3e635;
+    }
+
+    .upgrade-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #7dd3fc;
+      margin-bottom: 2px;
+    }
+
+    .upgrade-desc {
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .chip {
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .ad-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 48;
+      background: rgba(2, 6, 23, 0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .ad-modal.open {
+      display: flex;
+    }
+
+    .ad-card {
+      width: 100%;
+      max-width: 380px;
+      background: #0f172a;
+      border: 2px solid #fbbf24;
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.92);
+    }
+
+    .ad-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fde047;
+      background: rgba(251, 191, 36, 0.14);
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      border-radius: 999px;
+      padding: 3px 10px;
+      margin-bottom: 10px;
+    }
+
+    .ad-box {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px dashed rgba(163, 230, 53, 0.65);
+      border-radius: 12px;
+      padding: 22px 12px;
+      margin-bottom: 12px;
+    }
+
+    .ad-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ecfccb;
+      margin-bottom: 6px;
+    }
+
+    .ad-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .stream-panel {
+      position: fixed;
+      top: 74px;
+      right: 10px;
+      width: min(340px, 94vw);
+      max-height: 78vh;
+      overflow-y: auto;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.97);
+      border: 1.5px solid #38bdf8;
+      border-radius: 14px;
+      padding: 14px;
+      display: none;
+    }
+
+    .stream-panel.open {
+      display: block;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #7dd3fc;
+    }
+
+    .panel-section {
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .panel-section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .panel-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .panel-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .panel-input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #1e293b;
+      color: #f8fafc;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .p-btn {
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #1e293b;
+      color: #f8fafc;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .p-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .p-btn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .p-btn.green {
+      background: #15803d;
+      border-color: #86efac;
+    }
+
+    .p-btn.blue {
+      background: #0369a1;
+      border-color: #7dd3fc;
+    }
+
+    .p-btn.amber {
+      background: #b45309;
+      border-color: #fcd34d;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div class="secret-corner" id="secretCorner"></div>
+
+  <div class="hud-top">
+    <div class="pill advisor">Советник: <span id="uiAdvisorTimer">10:00</span></div>
+    <div class="pill ad-timer">Реклама: <span id="uiAdTimer">05:00</span></div>
+    <div class="pill">Измерение: <span id="uiDim">Цитадель</span></div>
+    <div class="pill" id="scorePill">Очки: <span id="uiScore">0</span></div>
+    <div class="pill">HP: <span id="uiHp">100</span></div>
+  </div>
+
+  <div class="top-mech-bar" id="topMechBar">
+    <button type="button" class="mech-btn active" id="btnMetalArms">Металлические руки: ВКЛ</button>
+    <div class="pill">Лазеры: <span id="uiLaserDmg">150+</span></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="quote-box" id="quoteBox">
+    <div class="quote-line"><span class="q-speaker-a" id="qSpeakerA">Рик:</span> <span id="qTextA"></span></div>
+    <div class="quote-line"><span class="q-speaker-b" id="qSpeakerB">Морти:</span> <span id="qTextB"></span></div>
+  </div>
+
+  <!-- Сцена на 10 000 очков: бег домой, Саммер сидит, звук взрыва, Рик подглядывает -->
+  <div class="cutscene-overlay" id="parasiteCutscene">
+    <div class="cutscene-card">
+      <div class="cutscene-tag">10 000+ ОЧКОВ • ДОМ СМИТОВ</div>
+      <div class="cutscene-scene">
+        <div>Рик и Морти вбежали домой и увидели, что <strong>Саммер сидит</strong> в гостиной.</div>
+        <div class="boom-line">БУ-У-УМ! Звук взрыва сотрясает дом!</div>
+        <div>Рик осторожно подглядывает из-за угла...</div>
+        <div class="rick-line">Рик Санчез: «Блять, на нас напали паразиты воспоминаний!»</div>
+        <div style="margin-top:6px; color:#7dd3fc;">
+          Рик сразу включает защиту. Ты берёшь управление за <strong>Морти</strong> с лазерным оружием и приказом: <strong>«Сохранить спокойствие и убить паразитов!»</strong>
+        </div>
+      </div>
+      <button type="button" class="p-btn green" id="btnStartMortyParasites" style="width:100%;">
+        Играть за Морти (Лазер против паразитов)
+      </button>
+    </div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="hero-bar" id="heroBar">
+      <button type="button" class="hero-btn active" data-hero="rick">Рик</button>
+      <button type="button" class="hero-btn" data-hero="morty">Морти (Лазер)</button>
+      <button type="button" class="hero-btn" data-hero="birdperson">Птичья личность</button>
+      <button type="button" class="hero-btn" data-hero="summer">Саммер</button>
+      <button type="button" class="hero-btn" data-hero="jerry">Джерри</button>
+      <button type="button" class="hero-btn" data-hero="prime">Прайм</button>
+      <button type="button" class="hero-btn" data-hero="spacebeth">Космическая Бет</button>
+      <button type="button" class="hero-btn" data-hero="beth">Бет</button>
+    </div>
+    <div class="action-row">
+      <button class="btn" id="btnQuote" type="button">Реплика</button>
+      <button class="btn btn-shield" id="btnShield" type="button">Силовое поле</button>
+      <button class="btn btn-tech" id="btnJet" type="button">Джетпак</button>
+      <button class="btn btn-green" id="btnPulse" type="button">Импульс</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="upgradeModal">
+    <div class="modal-card">
+      <div class="modal-title" id="upgradeTitle">УЛУЧШЕНИЕ ТЕХНОЛОГИИ (100+ ОЧКОВ)</div>
+      <div class="modal-sub">
+        Игра на паузе! Выбери одно улучшение, и бой сразу продолжится:
+      </div>
+      <div class="upgrade-list" id="upgradeList"></div>
+    </div>
+  </div>
+
+  <div class="ad-modal" id="adModal">
+    <div class="ad-card">
+      <div class="ad-tag">ПАУЗА • КАЖДЫЕ 5 МИНУТ (30 СЕК)</div>
+      <div class="ad-box">
+        <div class="ad-title">РЕКЛАМНЫЙ БЛОК (30 СЕК)</div>
+        <div class="ad-desc">
+          Игра на паузе. Слот готов под подключение рекламного SDK на площадке публикации.
+        </div>
+      </div>
+      <button type="button" class="p-btn green" id="btnCloseAd" style="width:100%;" disabled>
+        Ожидайте окончания рекламы (<span id="uiAdRemaining">30</span>с)
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="dimModal">
+    <div class="modal-card">
+      <div class="modal-title">Открыть зелёный портал</div>
+      <div class="modal-sub">
+        Введи название измерения. После подтверждения нажми на экран ещё раз — и телепортируешься!
+      </div>
+      <input type="text" id="dimInput" class="input-box" maxlength="28" placeholder="Например: Цитадель или Космос" />
+      <div class="chips">
+        <button type="button" class="chip" data-dim="Цитадель">Цитадель</button>
+        <button type="button" class="chip" data-dim="Космос">Космос</button>
+        <button type="button" class="chip" data-dim="Кроненберги">Кроненберги</button>
+        <button type="button" class="chip" data-dim="Федерация">Федерация</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="p-btn" id="btnDimCancel">Отмена</button>
+        <button type="button" class="p-btn green" id="btnDimConfirm">Открыть портал</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stream-panel" id="streamPanel">
+    <div class="panel-head">
+      <span>АДМИН-ПАНЕЛЬ СТРИМА (2D)</span>
+      <button type="button" class="p-btn" id="btnClosePanel">✕</button>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Измерение и портал от зрителя</div>
+      <div class="panel-row">
+        <input type="text" id="liveDimInput" class="panel-input" placeholder="Название измерения..." />
+        <button type="button" class="p-btn green" id="btnApplyDim">В мир</button>
+      </div>
+      <div class="quick-grid">
+        <button type="button" class="p-btn green" id="btnSpawnPortal">Зелёный портал</button>
+        <button type="button" class="p-btn blue" id="btnTeleportNow">Телепорт сейчас</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Злодеи и боссы (1000+ / 10000+)</div>
+      <div class="panel-row">
+        <input type="text" id="bossNameInput" class="panel-input" placeholder="Имя зрителя / босса..." />
+        <button type="button" class="p-btn amber" id="btnSpawnBoss">Босс</button>
+      </div>
+      <div class="quick-grid">
+        <button type="button" class="p-btn blue" id="btnSpawnNimbus">М-р Нимбус</button>
+        <button type="button" class="p-btn amber" id="btnSpawnEvilMorty">Злой Морти</button>
+        <button type="button" class="p-btn blue" id="btnSpawnPresident">Президент + армия</button>
+        <button type="button" class="p-btn green" id="btnSpawnDino">Динозавр-портал</button>
+        <button type="button" class="p-btn amber" id="btnSpawnParasite">Паразит воспоминаний</button>
+        <button type="button" class="p-btn green" id="btnBoost10000">10 000+ очков</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Технологии и экшен</div>
+      <div class="quick-grid">
+        <button type="button" class="p-btn blue" id="btnWave5">+5 врагов</button>
+        <button type="button" class="p-btn green" id="btnMegaPulse">Мега-импульс</button>
+        <button type="button" class="p-btn blue" id="btnAdminJet">Джетпак-рывок</button>
+        <button type="button" class="p-btn amber" id="btnGiantMode">Гигант / Турбо</button>
+        <button type="button" class="p-btn green" id="btnAdd100Score">+100 очков</button>
+        <button type="button" class="p-btn amber" id="btnBoost1000">1000+ очков</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Стиль и состояние</div>
+      <div class="quick-grid">
+        <button type="button" class="p-btn" id="btnShiftHue">Сменить цвет мира</button>
+        <button type="button" class="p-btn green" id="btnHealFull">Фулл HP</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function 
